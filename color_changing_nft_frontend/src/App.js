@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useWalletKit } from '@mysten/wallet-kit';
 import { ConnectButton } from '@mysten/wallet-kit';
 import NFTCard from './components/NFTCard';
@@ -17,16 +17,7 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentInterval, setCurrentInterval] = useState(3600);
 
-  // Fetch user's NFTs when wallet is connected
-  useEffect(() => {
-    if (isConnected && currentAccount) {
-      fetchUserNFTs();
-      checkAdminStatus();
-      fetchCurrentInterval();
-    }
-  }, [isConnected, currentAccount]);
-
-  const fetchUserNFTs = async () => {
+  const fetchUserNFTs = useCallback(async () => {
     if (!currentAccount?.address) return;
     
     setIsLoading(true);
@@ -41,9 +32,9 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentAccount]);
 
-  const checkAdminStatus = async () => {
+  const checkAdminStatus = useCallback(async () => {
     if (!currentAccount?.address) return;
     
     try {
@@ -52,32 +43,32 @@ function App() {
     } catch (error) {
       console.error('Error checking admin status:', error);
     }
-  };
+  }, [currentAccount]);
 
-  const fetchCurrentInterval = async () => {
+  const fetchCurrentInterval = useCallback(async () => {
     try {
       const interval = await suiUtils.getCurrentInterval();
       setCurrentInterval(interval);
     } catch (error) {
       console.error('Error fetching current interval:', error);
     }
-  };
+  }, []);
 
-  const handleMintNFT = async (formData) => {
+  const handleMintNFT = useCallback(async (formData) => {
     // This function is called from MintForm component
     // The actual contract interaction happens in MintForm
     // Here we just refresh the NFT list after minting
     await fetchUserNFTs();
-  };
+  }, [fetchUserNFTs]);
 
-  const handleUpdateNFT = async (nftId, result) => {
+  const handleUpdateNFT = useCallback(async (nftId, result) => {
     // This function is called from NFTCard component
     // The actual contract interaction happens in NFTCard
     // Here we just refresh the NFT list after updating
     await fetchUserNFTs();
-  };
+  }, [fetchUserNFTs]);
 
-  const handleUpdateInterval = async (newInterval) => {
+  const handleUpdateInterval = useCallback(async (newInterval) => {
     if (!isAdmin || !currentAccount) return;
     
     try {
@@ -103,7 +94,16 @@ function App() {
       console.error('Error updating interval:', error);
       throw error;
     }
-  };
+  }, [isAdmin, currentAccount, signAndExecuteTransactionBlock]);
+
+  // Fetch user's NFTs when wallet is connected
+  useEffect(() => {
+    if (isConnected && currentAccount) {
+      fetchUserNFTs();
+      checkAdminStatus();
+      fetchCurrentInterval();
+    }
+  }, [isConnected, currentAccount, fetchUserNFTs, checkAdminStatus, fetchCurrentInterval]);
 
   return (
     <div className="min-h-screen flex flex-col">

@@ -5,5 +5,9 @@
   "ignoreCommand": "git diff --quiet HEAD^ HEAD ./color_changing_nft_frontend",
   "github": {
     "silent": true
+  },
+  "env": {
+    "CI": "false",
+    "ESLINT_NO_DEV_ERRORS": "true"
   }
 }

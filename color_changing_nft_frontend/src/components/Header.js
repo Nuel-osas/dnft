@@ -12,9 +12,9 @@ const Header = () => {
         </div>
         <nav>
           <ul className="flex space-x-6">
-            <li><a href="#" className="hover:text-primary-200 transition-colors">Home</a></li>
-            <li><a href="#" className="hover:text-primary-200 transition-colors">About</a></li>
-            <li><a href="#" className="hover:text-primary-200 transition-colors">Docs</a></li>
+            <li><a href="/" className="hover:text-primary-200 transition-colors">Home</a></li>
+            <li><a href="https://github.com/Nuel-osas/dnft" className="hover:text-primary-200 transition-colors">About</a></li>
+            <li><a href="https://docs.sui.io/" className="hover:text-primary-200 transition-colors">Docs</a></li>
           </ul>
         </nav>
       </div>

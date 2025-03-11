@@ -53,11 +53,6 @@ const NFTCard = ({ nft, onUpdate }) => {
     return () => clearInterval(timer);
   }, [nft.lastUpdated]);
   
-  // Format timestamp to readable date
-  const formatDate = (timestamp) => {
-    return new Date(timestamp).toLocaleString();
-  };
-  
   // Calculate time since last update
   const getTimeSinceLastUpdate = () => {
     const now = Date.now();
