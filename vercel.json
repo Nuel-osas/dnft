@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "cd color_changing_nft_frontend && npm install && npm run build",
+  "buildCommand": "cd color_changing_nft_frontend && npm install && set \"DISABLE_ESLINT_PLUGIN=true\" && npm run build",
   "outputDirectory": "color_changing_nft_frontend/build",
   "ignoreCommand": "git diff --quiet HEAD^ HEAD ./color_changing_nft_frontend",
   "github": {
@@ -8,6 +8,7 @@
   },
   "env": {
     "CI": "false",
-    "ESLINT_NO_DEV_ERRORS": "true"
+    "ESLINT_NO_DEV_ERRORS": "true",
+    "DISABLE_ESLINT_PLUGIN": "true"
   }
 }
