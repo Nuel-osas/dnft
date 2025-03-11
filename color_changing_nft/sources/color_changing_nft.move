@@ -43,7 +43,9 @@ module color_changing_nft::dynamic_nft {
         name: String,
         description: String,
         // Last time the NFT was updated
-        last_updated: u64
+        last_updated: u64,
+        // Current image based on state
+        current_image: String
     }
 
     // Event emitted when the NFT color changes
@@ -108,14 +110,18 @@ module color_changing_nft::dynamic_nft {
         clock: &Clock,
         ctx: &mut TxContext
     ) {
+        let image_one_str = string::utf8(image_one);
+        let image_two_str = string::utf8(image_two);
+        
         let nft = DynamicNFT {
             id: object::new(ctx),
             current_state: 0,
-            image_one: string::utf8(image_one),
-            image_two: string::utf8(image_two),
+            image_one: image_one_str,
+            image_two: image_two_str,
             name: string::utf8(name),
             description: string::utf8(description),
-            last_updated: clock::timestamp_ms(clock)
+            last_updated: clock::timestamp_ms(clock),
+            current_image: image_one_str
         };
         
         transfer::transfer(nft, tx_context::sender(ctx));
@@ -138,6 +144,9 @@ module color_changing_nft::dynamic_nft {
             // Toggle the NFT state
             nft.current_state = if (nft.current_state == 0) { 1 } else { 0 };
             nft.last_updated = current_time;
+            
+            // Update the current_image field based on the new state
+            nft.current_image = if (nft.current_state == 0) { nft.image_one } else { nft.image_two };
             
             // Emit event for the color change
             event::emit(ColorChangeEvent {

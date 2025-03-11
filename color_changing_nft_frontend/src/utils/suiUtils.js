@@ -7,8 +7,8 @@ const client = new SuiClient({
 });
 
 // Contract address - replace with your deployed contract address
-const CONTRACT_ADDRESS = '0x0bf972bf36777877adcb2220e5ae599435a0e94fa02310102e0e9a9c510e6b44'; // Package ID for the dynamic NFT contract
-const TIME_ORACLE_ID = '0x864e17134e1ab0b5657558547d47419d8e517d4c6eacdce97eda95e56d7b5a1b'; // Time Oracle object ID
+const CONTRACT_ADDRESS = '0xe7f02873a68d1ec90041764de419fe069b8209379d6d8965711629d3053d2a38'; // Package ID for the dynamic NFT contract
+const TIME_ORACLE_ID = '0xa86cb51b049681c839bcf3b9c0e5949569cfba31b9cd5da702ca68583f6d91eb'; // Time Oracle object ID
 
 // Utility functions for interacting with the smart contract
 export const suiUtils = {
