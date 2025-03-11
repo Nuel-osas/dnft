@@ -62,7 +62,7 @@ module color_changing_nft::dynamic_nft {
         let oracle = TimeOracle {
             id: object::new(ctx),
             last_update: 0,
-            update_interval: 3600 // 1 hour in seconds
+            update_interval: 300 // 5 minutes in seconds
         };
         transfer::share_object(oracle);
         

@@ -134,17 +134,15 @@ function App() {
                 >
                   My Collection
                 </button>
-                {isAdmin && (
-                  <button 
-                    className={`py-2 px-4 ${activeTab === 'oracle' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'}`}
-                    onClick={() => {
-                      setActiveTab('oracle');
-                      fetchCurrentInterval(); // Refresh interval when switching to oracle tab
-                    }}
-                  >
-                    Time Oracle
-                  </button>
-                )}
+                <button 
+                  className={`py-2 px-4 ${activeTab === 'oracle' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'}`}
+                  onClick={() => {
+                    setActiveTab('oracle');
+                    fetchCurrentInterval(); // Refresh interval when switching to oracle tab
+                  }}
+                >
+                  Time Oracle
+                </button>
               </div>
               
               {activeTab === 'mint' && (
@@ -197,8 +195,6 @@ function App() {
               {activeTab === 'oracle' && (
                 <TimeOraclePanel 
                   currentInterval={currentInterval}
-                  onUpdateInterval={handleUpdateInterval}
-                  isAdmin={isAdmin}
                 />
               )}
             </div>

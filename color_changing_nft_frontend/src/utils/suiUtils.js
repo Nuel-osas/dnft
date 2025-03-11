@@ -7,8 +7,8 @@ const client = new SuiClient({
 });
 
 // Contract address - replace with your deployed contract address
-const CONTRACT_ADDRESS = '0xe7f02873a68d1ec90041764de419fe069b8209379d6d8965711629d3053d2a38'; // Package ID for the dynamic NFT contract
-const TIME_ORACLE_ID = '0xa86cb51b049681c839bcf3b9c0e5949569cfba31b9cd5da702ca68583f6d91eb'; // Time Oracle object ID
+const CONTRACT_ADDRESS = '0x858b87cea4a8af5dcf0f9ffe13b06a37e120ed4041e43d490f831abf37b4ce4b'; // Package ID for the dynamic NFT contract
+const TIME_ORACLE_ID = '0x784613592ff44a7424af93ddd3af33c5268dc6bedf04b5eace9811d6b10c6a78'; // Time Oracle object ID
 
 // Utility functions for interacting with the smart contract
 export const suiUtils = {
@@ -211,10 +211,10 @@ export const suiUtils = {
       });
       
       const interval = object.data?.content?.fields?.interval;
-      return interval ? parseInt(interval) : 3600; // Default to 1 hour if not found
+      return interval ? parseInt(interval) : 300; // Default to 5 minutes if not found
     } catch (error) {
       console.error('Error getting current interval:', error);
-      return 3600; // Default to 1 hour
+      return 300; // Default to 5 minutes
     }
   },
 };
