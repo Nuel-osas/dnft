@@ -1,11 +1,13 @@
 {
   "version": 2,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/color_changing_nft_frontend/build/index.html"
+    }
+  ],
   "buildCommand": "cd color_changing_nft_frontend && npm install && npm run build",
   "outputDirectory": "color_changing_nft_frontend/build",
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/.*", "dest": "/index.html" }
-  ],
   "github": {
     "silent": true
   }
