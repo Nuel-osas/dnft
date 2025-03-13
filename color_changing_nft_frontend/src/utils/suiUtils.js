@@ -87,24 +87,52 @@ export const suiUtils = {
   // Mint a new NFT
   async mintNFT(signer, { name, description, imageOne, imageTwo }) {
     try {
-      // Process and upload the images to ImgBB
+      // Process and upload the images to ImgBB in parallel
       let processedImageOne, processedImageTwo;
       
       try {
-        // Try to upload to ImgBB first
+        // Try to upload both images to ImgBB in parallel
+        const uploadPromises = [];
+        
         if (imageOne.startsWith('data:')) {
-          processedImageOne = await uploadImageToImgBB(imageOne, `${name}_state0`);
+          uploadPromises.push(
+            uploadImageToImgBB(imageOne, `${name}_state0`)
+              .then(url => { processedImageOne = url; })
+              .catch(error => {
+                console.warn('Failed to upload image one to ImgBB:', error);
+                processedImageOne = storeImageLocally(imageOne, `${name}_state0`);
+              })
+          );
         } else {
           processedImageOne = imageOne;
         }
         
         if (imageTwo.startsWith('data:')) {
-          processedImageTwo = await uploadImageToImgBB(imageTwo, `${name}_state1`);
+          uploadPromises.push(
+            uploadImageToImgBB(imageTwo, `${name}_state1`)
+              .then(url => { processedImageTwo = url; })
+              .catch(error => {
+                console.warn('Failed to upload image two to ImgBB:', error);
+                processedImageTwo = storeImageLocally(imageTwo, `${name}_state1`);
+              })
+          );
         } else {
           processedImageTwo = imageTwo;
         }
+        
+        // Wait for all uploads to complete
+        await Promise.all(uploadPromises);
+        
+        // Set default values if uploads didn't succeed
+        if (!processedImageOne && imageOne.startsWith('data:')) {
+          processedImageOne = storeImageLocally(imageOne, `${name}_state0`);
+        }
+        
+        if (!processedImageTwo && imageTwo.startsWith('data:')) {
+          processedImageTwo = storeImageLocally(imageTwo, `${name}_state1`);
+        }
       } catch (error) {
-        console.warn('Failed to upload to ImgBB, falling back to local storage:', error);
+        console.warn('Error in image upload process, falling back to local storage:', error);
         // Fall back to local storage if ImgBB upload fails
         processedImageOne = imageOne.startsWith('data:') ? 
           storeImageLocally(imageOne, `${name}_state0`) : imageOne;

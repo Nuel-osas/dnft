@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWalletKit } from '@mysten/wallet-kit';
 import suiUtils from '../utils/suiUtils';
+import { uploadImageToImgBB, storeImageLocally } from '../utils/imageUtils';
 
 const MintForm = ({ onMint }) => {
   const { currentAccount, signAndExecuteTransactionBlock } = useWalletKit();
@@ -9,6 +10,10 @@ const MintForm = ({ onMint }) => {
     description: '',
     imageOne: '',
     imageTwo: '',
+  });
+  const [processedImages, setProcessedImages] = useState({
+    imageOne: null,
+    imageTwo: null,
   });
   const [previewState, setPreviewState] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,12 +24,53 @@ const MintForm = ({ onMint }) => {
   const [imageTwoFile, setImageTwoFile] = useState(null);
   const [isUploading, setIsUploading] = useState({ imageOne: false, imageTwo: false });
 
+  // Start pre-processing images when they're added to formData
+  useEffect(() => {
+    const preprocessImage = async (imageData, imageType) => {
+      if (!imageData || !imageData.startsWith('data:') || processedImages[imageType]) {
+        return;
+      }
+      
+      try {
+        // Try to upload to ImgBB in the background
+        const url = await uploadImageToImgBB(imageData, `${formData.name || 'nft'}_${imageType}`);
+        setProcessedImages(prev => ({
+          ...prev,
+          [imageType]: url
+        }));
+        console.log(`Pre-processed ${imageType} successfully`);
+      } catch (error) {
+        console.warn(`Failed to pre-process ${imageType}:`, error);
+        // We'll handle the fallback during actual minting
+      }
+    };
+    
+    // Only attempt pre-processing if we have a name (to use as identifier) and the image data
+    if (formData.name) {
+      if (formData.imageOne && !processedImages.imageOne) {
+        preprocessImage(formData.imageOne, 'imageOne');
+      }
+      
+      if (formData.imageTwo && !processedImages.imageTwo) {
+        preprocessImage(formData.imageTwo, 'imageTwo');
+      }
+    }
+  }, [formData.imageOne, formData.imageTwo, formData.name, processedImages]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value,
     });
+    
+    // If name changes, reset processed images so they'll be reprocessed with new name
+    if (name === 'name') {
+      setProcessedImages({
+        imageOne: null,
+        imageTwo: null,
+      });
+    }
   };
   
   // Handle file uploads
@@ -62,6 +108,7 @@ const MintForm = ({ onMint }) => {
           ...formData,
           imageOne: base64String,
         });
+        setProcessedImages(prev => ({ ...prev, imageOne: null })); // Reset processed image
         setIsUploading(prev => ({ ...prev, imageOne: false }));
       } else {
         setImageTwoFile(file);
@@ -69,6 +116,7 @@ const MintForm = ({ onMint }) => {
           ...formData,
           imageTwo: base64String,
         });
+        setProcessedImages(prev => ({ ...prev, imageTwo: null })); // Reset processed image
         setIsUploading(prev => ({ ...prev, imageTwo: false }));
       }
     };
@@ -93,14 +141,18 @@ const MintForm = ({ onMint }) => {
     setError(null);
     
     try {
+      // Use pre-processed images if available, otherwise use the original images
+      const finalImageOne = processedImages.imageOne || formData.imageOne;
+      const finalImageTwo = processedImages.imageTwo || formData.imageTwo;
+      
       // Call the smart contract to mint the NFT
       const result = await suiUtils.mintNFT(
         { signAndExecuteTransactionBlock },
         {
           name: formData.name,
           description: formData.description,
-          imageOne: formData.imageOne,
-          imageTwo: formData.imageTwo,
+          imageOne: finalImageOne,
+          imageTwo: finalImageTwo,
         }
       );
       
@@ -121,6 +173,10 @@ const MintForm = ({ onMint }) => {
       });
       setImageOneFile(null);
       setImageTwoFile(null);
+      setProcessedImages({
+        imageOne: null,
+        imageTwo: null,
+      });
       
       alert('NFT minted successfully! Transaction ID: ' + result.digest);
     } catch (error) {
@@ -203,6 +259,9 @@ const MintForm = ({ onMint }) => {
                 {imageOneFile && !isUploading.imageOne && (
                   <div className="mt-2 text-sm text-gray-500">
                     Selected: {imageOneFile.name} ({Math.round(imageOneFile.size / 1024)} KB)
+                    {processedImages.imageOne && (
+                      <span className="ml-2 text-green-600"> Pre-processed</span>
+                    )}
                   </div>
                 )}
               </div>
@@ -244,6 +303,9 @@ const MintForm = ({ onMint }) => {
                 {imageTwoFile && !isUploading.imageTwo && (
                   <div className="mt-2 text-sm text-gray-500">
                     Selected: {imageTwoFile.name} ({Math.round(imageTwoFile.size / 1024)} KB)
+                    {processedImages.imageTwo && (
+                      <span className="ml-2 text-green-600"> Pre-processed</span>
+                    )}
                   </div>
                 )}
               </div>
