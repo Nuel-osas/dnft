@@ -13,6 +13,10 @@ const MintForm = ({ onMint }) => {
   const [previewState, setPreviewState] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Add state for file uploads
+  const [imageOneFile, setImageOneFile] = useState(null);
+  const [imageTwoFile, setImageTwoFile] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -20,6 +24,50 @@ const MintForm = ({ onMint }) => {
       ...formData,
       [name]: value,
     });
+  };
+  
+  // Handle file uploads
+  const handleFileUpload = (e, stateNumber) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please upload an image file (JPEG, PNG, etc.)');
+      return;
+    }
+    
+    // Check file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image file is too large. Please upload an image smaller than 5MB.');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64String = event.target.result;
+      
+      // Store in state based on which image is being uploaded
+      if (stateNumber === 0) {
+        setImageOneFile(file);
+        setFormData({
+          ...formData,
+          imageOne: base64String,
+        });
+      } else {
+        setImageTwoFile(file);
+        setFormData({
+          ...formData,
+          imageTwo: base64String,
+        });
+      }
+    };
+    
+    reader.onerror = () => {
+      setError('Error reading file. Please try again.');
+    };
+    
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
@@ -60,6 +108,8 @@ const MintForm = ({ onMint }) => {
         imageOne: '',
         imageTwo: '',
       });
+      setImageOneFile(null);
+      setImageTwoFile(null);
       
       alert('NFT minted successfully! Transaction ID: ' + result.digest);
     } catch (error) {
@@ -117,35 +167,65 @@ const MintForm = ({ onMint }) => {
           </div>
           
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="imageOne">
-              Image URL (State 0) *
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              Image for State 0 *
             </label>
-            <input
-              type="url"
-              id="imageOne"
-              name="imageOne"
-              value={formData.imageOne}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="https://example.com/image1.png"
-              required
-            />
+            <div className="flex flex-col space-y-2">
+              <div className="border border-gray-300 rounded-md p-4 bg-gray-50">
+                <input
+                  type="file"
+                  id="imageOneUpload"
+                  accept="image/*"
+                  onChange={(e) => handleFileUpload(e, 0)}
+                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                />
+                {imageOneFile && (
+                  <div className="mt-2 text-sm text-gray-500">
+                    Selected: {imageOneFile.name} ({Math.round(imageOneFile.size / 1024)} KB)
+                  </div>
+                )}
+              </div>
+              {formData.imageOne && (
+                <div className="h-20 w-20 border border-gray-200 rounded-md overflow-hidden">
+                  <img 
+                    src={formData.imageOne} 
+                    alt="State 0 Preview" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+            </div>
           </div>
           
           <div className="mb-6">
-            <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="imageTwo">
-              Image URL (State 1) *
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              Image for State 1 *
             </label>
-            <input
-              type="url"
-              id="imageTwo"
-              name="imageTwo"
-              value={formData.imageTwo}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="https://example.com/image2.png"
-              required
-            />
+            <div className="flex flex-col space-y-2">
+              <div className="border border-gray-300 rounded-md p-4 bg-gray-50">
+                <input
+                  type="file"
+                  id="imageTwoUpload"
+                  accept="image/*"
+                  onChange={(e) => handleFileUpload(e, 1)}
+                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                />
+                {imageTwoFile && (
+                  <div className="mt-2 text-sm text-gray-500">
+                    Selected: {imageTwoFile.name} ({Math.round(imageTwoFile.size / 1024)} KB)
+                  </div>
+                )}
+              </div>
+              {formData.imageTwo && (
+                <div className="h-20 w-20 border border-gray-200 rounded-md overflow-hidden">
+                  <img 
+                    src={formData.imageTwo} 
+                    alt="State 1 Preview" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+            </div>
           </div>
           
           <div className="flex justify-between">
@@ -179,7 +259,7 @@ const MintForm = ({ onMint }) => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto mb-2 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <p>Enter image URL to see preview</p>
+                <p>Upload images to see preview</p>
               </div>
             )}
             <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded-full">

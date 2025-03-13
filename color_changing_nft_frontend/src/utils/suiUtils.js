@@ -10,6 +10,36 @@ const client = new SuiClient({
 const CONTRACT_ADDRESS = '0x858b87cea4a8af5dcf0f9ffe13b06a37e120ed4041e43d490f831abf37b4ce4b'; // Package ID for the dynamic NFT contract
 const TIME_ORACLE_ID = '0x784613592ff44a7424af93ddd3af33c5268dc6bedf04b5eace9811d6b10c6a78'; // Time Oracle object ID
 
+// Helper function to store images and generate persistent URLs
+const storeImage = (base64Image, imageName) => {
+  try {
+    // Generate a unique key for the image
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    const key = `dnft_image_${timestamp}_${randomStr}`;
+    
+    // Store the image in localStorage
+    localStorage.setItem(key, base64Image);
+    
+    // Return a pseudo-URL that can be used to retrieve the image
+    return `local://${key}`;
+  } catch (error) {
+    console.error('Error storing image:', error);
+    // Return the original base64 string if storage fails
+    return base64Image;
+  }
+};
+
+// Helper function to retrieve stored images
+const getStoredImage = (url) => {
+  if (url && url.startsWith('local://')) {
+    const key = url.replace('local://', '');
+    const storedImage = localStorage.getItem(key);
+    return storedImage || url;
+  }
+  return url;
+};
+
 // Utility functions for interacting with the smart contract
 export const suiUtils = {
   // Get NFTs owned by the current wallet
@@ -33,13 +63,24 @@ export const suiUtils = {
           const content = obj.data?.content;
           const display = obj.data?.display;
           
+          // Get the image URLs and resolve any local storage references
+          let imageOne = content?.fields?.image_one || '';
+          let imageTwo = content?.fields?.image_two || '';
+          let currentImage = content?.fields?.current_image || '';
+          
+          // Resolve local storage references if needed
+          imageOne = getStoredImage(imageOne);
+          imageTwo = getStoredImage(imageTwo);
+          currentImage = getStoredImage(currentImage);
+          
           return {
             id: obj.data.objectId,
             name: display?.name || 'Unnamed NFT',
             description: display?.description || '',
             currentState: content?.fields?.current_state || 0,
-            imageOne: content?.fields?.image_one || '',
-            imageTwo: content?.fields?.image_two || '',
+            imageOne,
+            imageTwo,
+            currentImage,
             lastUpdated: parseInt(content?.fields?.last_updated) || Date.now(),
           };
         });
@@ -75,6 +116,13 @@ export const suiUtils = {
   // Mint a new NFT
   async mintNFT(signer, { name, description, imageOne, imageTwo }) {
     try {
+      // Process and store the images
+      const processedImageOne = imageOne.startsWith('data:') ? 
+        storeImage(imageOne, `${name}_state0`) : imageOne;
+      
+      const processedImageTwo = imageTwo.startsWith('data:') ? 
+        storeImage(imageTwo, `${name}_state1`) : imageTwo;
+      
       const tx = new TransactionBlock();
       
       // Set gas budget explicitly to avoid dry run failures
@@ -84,8 +132,8 @@ export const suiUtils = {
       tx.moveCall({
         target: `${CONTRACT_ADDRESS}::dynamic_nft::mint_nft`,
         arguments: [
-          tx.pure(imageOne),
-          tx.pure(imageTwo),
+          tx.pure(processedImageOne),
+          tx.pure(processedImageTwo),
           tx.pure(name),
           tx.pure(description),
           tx.object('0x6'), // Clock object ID
