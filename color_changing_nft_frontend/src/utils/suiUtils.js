@@ -1,5 +1,6 @@
 import { SuiClient } from '@mysten/sui.js/client';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { uploadImageToImgBB, storeImageLocally, getStoredImage } from './imageUtils';
 
 // Initialize the SuiClient for testnet
 const client = new SuiClient({
@@ -9,36 +10,6 @@ const client = new SuiClient({
 // Contract address - replace with your deployed contract address
 const CONTRACT_ADDRESS = '0x858b87cea4a8af5dcf0f9ffe13b06a37e120ed4041e43d490f831abf37b4ce4b'; // Package ID for the dynamic NFT contract
 const TIME_ORACLE_ID = '0x784613592ff44a7424af93ddd3af33c5268dc6bedf04b5eace9811d6b10c6a78'; // Time Oracle object ID
-
-// Helper function to store images and generate persistent URLs
-const storeImage = (base64Image, imageName) => {
-  try {
-    // Generate a unique key for the image
-    const timestamp = Date.now();
-    const randomStr = Math.random().toString(36).substring(2, 8);
-    const key = `dnft_image_${timestamp}_${randomStr}`;
-    
-    // Store the image in localStorage
-    localStorage.setItem(key, base64Image);
-    
-    // Return a pseudo-URL that can be used to retrieve the image
-    return `local://${key}`;
-  } catch (error) {
-    console.error('Error storing image:', error);
-    // Return the original base64 string if storage fails
-    return base64Image;
-  }
-};
-
-// Helper function to retrieve stored images
-const getStoredImage = (url) => {
-  if (url && url.startsWith('local://')) {
-    const key = url.replace('local://', '');
-    const storedImage = localStorage.getItem(key);
-    return storedImage || url;
-  }
-  return url;
-};
 
 // Utility functions for interacting with the smart contract
 export const suiUtils = {
@@ -116,12 +87,31 @@ export const suiUtils = {
   // Mint a new NFT
   async mintNFT(signer, { name, description, imageOne, imageTwo }) {
     try {
-      // Process and store the images
-      const processedImageOne = imageOne.startsWith('data:') ? 
-        storeImage(imageOne, `${name}_state0`) : imageOne;
+      // Process and upload the images to ImgBB
+      let processedImageOne, processedImageTwo;
       
-      const processedImageTwo = imageTwo.startsWith('data:') ? 
-        storeImage(imageTwo, `${name}_state1`) : imageTwo;
+      try {
+        // Try to upload to ImgBB first
+        if (imageOne.startsWith('data:')) {
+          processedImageOne = await uploadImageToImgBB(imageOne, `${name}_state0`);
+        } else {
+          processedImageOne = imageOne;
+        }
+        
+        if (imageTwo.startsWith('data:')) {
+          processedImageTwo = await uploadImageToImgBB(imageTwo, `${name}_state1`);
+        } else {
+          processedImageTwo = imageTwo;
+        }
+      } catch (error) {
+        console.warn('Failed to upload to ImgBB, falling back to local storage:', error);
+        // Fall back to local storage if ImgBB upload fails
+        processedImageOne = imageOne.startsWith('data:') ? 
+          storeImageLocally(imageOne, `${name}_state0`) : imageOne;
+        
+        processedImageTwo = imageTwo.startsWith('data:') ? 
+          storeImageLocally(imageTwo, `${name}_state1`) : imageTwo;
+      }
       
       const tx = new TransactionBlock();
       

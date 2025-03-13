@@ -95,6 +95,53 @@ npm start
 3. Set a new interval by entering the time in seconds
 4. Click "Update Interval" and approve the transaction
 
+## Image Upload Feature
+
+The application now features a user-friendly image upload system that allows users to directly upload images from their devices when minting NFTs, rather than requiring them to provide URLs.
+
+### Key Features
+
+- **Direct Image Upload**: Users can upload images directly from their devices
+- **Cloud Storage with ImgBB**: Images are uploaded to ImgBB for permanent storage and accessibility across all devices
+- **Local Storage Fallback**: If cloud upload fails, images fall back to browser's localStorage
+- **File Validation**: Supports all image formats with a 10MB size limit
+- **Image Preview**: Users can preview their uploaded images before minting
+
+### Technical Implementation
+
+The image upload system uses a two-tier approach:
+
+1. **Primary Storage (ImgBB)**:
+   - Images are uploaded to ImgBB's cloud storage via their API
+   - This ensures images are accessible from any device and persist even if the user clears their browser data
+   - Each image receives a permanent URL that's stored in the NFT metadata
+
+2. **Fallback Storage (localStorage)**:
+   - If the ImgBB upload fails (e.g., due to network issues), the system falls back to localStorage
+   - Images are stored as base64 strings with unique keys
+   - A pseudo-URL system (`local://[unique-key]`) is used to reference these locally stored images
+
+### Configuration
+
+To use the ImgBB integration, you need to:
+
+1. Sign up for a free ImgBB account at https://api.imgbb.com/
+2. Get your API key from the dashboard
+3. Add your API key to the `.env` file:
+   ```
+   REACT_APP_IMGBB_API_KEY=your_imgbb_api_key_here
+   ```
+
+### User Experience
+
+The enhanced image upload system provides a seamless experience:
+
+1. Users click the file upload button or drag and drop an image
+2. The image is processed and a preview is shown
+3. When the user mints the NFT, the images are automatically uploaded to ImgBB
+4. The permanent image URLs are stored in the NFT metadata
+5. Images can be viewed from any device by anyone with access to the NFT
+
 ## Technical Details
 
 ### Smart Contract
@@ -107,27 +154,6 @@ npm start
 - Tailwind CSS for styling
 - @mysten/wallet-kit for wallet integration
 - @mysten/sui.js for blockchain interactions
-
-### Image Storage Implementation
-- **Client-side Storage**: Images are stored directly in the browser's localStorage
-- **Base64 Encoding**: Uploaded images are converted to base64 strings for efficient storage
-- **Pseudo-URL System**: A unique URL-like identifier (`local://[unique-key]`) is generated for each image
-- **Automatic Retrieval**: The system automatically retrieves and displays stored images when viewing NFTs
-
-#### How Image Upload Works
-1. When a user uploads an image, the file is read using the FileReader API
-2. The image is converted to a base64 data URL string
-3. The `storeImage` function generates a unique key using timestamps and random strings
-4. The image data is stored in localStorage with this key
-5. A pseudo-URL in the format `local://[unique-key]` is passed to the smart contract
-6. When displaying NFTs, the `getStoredImage` function retrieves the image data from localStorage
-
-#### Benefits of This Approach
-- **No Technical Knowledge Required**: Users don't need to know how to host images online
-- **Simplified User Experience**: Direct upload instead of URL copying/pasting
-- **No External Dependencies**: No need for external services like Cloudinary or Firebase
-- **Persistent Storage**: Images remain available even after browser refreshes
-- **Privacy**: Images are stored locally on the user's device
 
 ## How It Works
 
@@ -167,3 +193,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Sui Foundation for the blockchain infrastructure
 - Mysten Labs for the wallet integration tools
 - The Move language community for smart contract development resources
+- ImgBB for providing a reliable image hosting service
