@@ -45,8 +45,13 @@ function App() {
       if (isAdmin) {
         // Get the admin cap ID for later use
         const adminCaps = await suiUtils.getAdminCap(currentAccount.address);
+        console.log("Admin caps found:", adminCaps);
         if (adminCaps && adminCaps.length > 0) {
-          setAdminCapId(adminCaps[0].data.objectId);
+          const capId = adminCaps[0].data.objectId;
+          console.log("Setting admin cap ID:", capId);
+          setAdminCapId(capId);
+        } else {
+          console.log("No admin caps found even though isAdmin is true");
         }
       }
     } catch (error) {

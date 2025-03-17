@@ -65,6 +65,7 @@ export const suiUtils = {
   // Get the AdminCap object for the current wallet
   async getAdminCap(walletAddress) {
     try {
+      console.log("Fetching admin cap for wallet:", walletAddress);
       const objects = await client.getOwnedObjects({
         owner: walletAddress,
         options: {
@@ -73,12 +74,22 @@ export const suiUtils = {
         },
       });
       
+      console.log("All objects:", objects.data.map(obj => ({
+        id: obj.data?.objectId,
+        type: obj.data?.type
+      })));
+      
       // Filter for AdminCap objects
-      return objects.data
+      const adminCaps = objects.data
         .filter(obj => {
           const type = obj.data?.type;
-          return type && type.includes(`${CONTRACT_ADDRESS}::dynamic_nft::AdminCap`);
+          const isAdminCap = type && type.includes(`${CONTRACT_ADDRESS}::dynamic_nft::AdminCap`);
+          console.log(`Object ${obj.data?.objectId} type: ${type}, isAdminCap: ${isAdminCap}`);
+          return isAdminCap;
         });
+      
+      console.log("Admin caps filtered:", adminCaps);
+      return adminCaps;
     } catch (error) {
       console.error('Error fetching AdminCap:', error);
       return [];
@@ -274,6 +285,7 @@ export const suiUtils = {
   // Check if the current wallet has admin capability
   async checkAdminStatus(walletAddress) {
     try {
+      console.log("Checking admin status for wallet:", walletAddress);
       const objects = await client.getOwnedObjects({
         owner: walletAddress,
         options: {
@@ -281,12 +293,20 @@ export const suiUtils = {
         },
       });
       
+      console.log("Objects for admin check:", objects.data.map(obj => ({
+        id: obj.data?.objectId,
+        type: obj.data?.type
+      })));
+      
       // Check if any of the objects is an AdminCap
       const isAdmin = objects.data.some(obj => {
         const type = obj.data?.type;
-        return type && type.includes(`${CONTRACT_ADDRESS}::dynamic_nft::AdminCap`);
+        const isAdminCap = type && type.includes(`${CONTRACT_ADDRESS}::dynamic_nft::AdminCap`);
+        console.log(`Admin check for object ${obj.data?.objectId}: ${isAdminCap}`);
+        return isAdminCap;
       });
       
+      console.log("Is admin result:", isAdmin);
       return isAdmin;
     } catch (error) {
       console.error('Error checking admin status:', error);

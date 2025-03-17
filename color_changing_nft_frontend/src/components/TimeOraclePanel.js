@@ -1,32 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useWalletKit } from '@mysten/wallet-kit';
 import suiUtils from '../utils/suiUtils';
 
-const TimeOraclePanel = ({ defaultInterval, isAdmin, onIntervalUpdate }) => {
-  const { signAndExecuteTransactionBlock } = useWalletKit();
+const TimeOraclePanel = ({ defaultInterval, isAdmin, adminCapId, onIntervalUpdate }) => {
+  const { signAndExecuteTransactionBlock, currentAccount } = useWalletKit();
   const [newInterval, setNewInterval] = useState(defaultInterval);
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-  const [adminCapId, setAdminCapId] = useState(null);
-  
-  // Fetch admin cap ID when component mounts
-  useEffect(() => {
-    const fetchAdminCap = async () => {
-      if (isAdmin) {
-        try {
-          const adminCaps = await suiUtils.getAdminCap(window.suiWallet.getActiveAddress());
-          if (adminCaps && adminCaps.length > 0) {
-            setAdminCapId(adminCaps[0].data.objectId);
-          }
-        } catch (error) {
-          console.error('Error fetching admin cap:', error);
-        }
-      }
-    };
-    
-    fetchAdminCap();
-  }, [isAdmin]);
   
   // Format interval for display
   const formatInterval = (seconds) => {
@@ -60,6 +41,7 @@ const TimeOraclePanel = ({ defaultInterval, isAdmin, onIntervalUpdate }) => {
     setSuccess(false);
     
     try {
+      console.log("Using admin cap ID:", adminCapId);
       const result = await suiUtils.updateDefaultInterval(
         { signAndExecuteTransactionBlock },
         adminCapId,
