@@ -1,57 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { useWalletKit } from '@mysten/wallet-kit';
 import suiUtils from '../utils/suiUtils';
+import NFTIntervalSettings from './NFTIntervalSettings';
 
-const NFTCard = ({ nft, onUpdate }) => {
+const NFTCard = ({ nft, onUpdate, onIntervalUpdate }) => {
   const { signAndExecuteTransactionBlock } = useWalletKit();
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(null);
-  const [canUpdate, setCanUpdate] = useState(false);
   
-  // Check if the NFT can be updated (time interval has passed)
+  // Set up a timer to update the remaining time every second
   useEffect(() => {
-    const checkUpdateStatus = async () => {
-      try {
-        // Get the current interval from the oracle
-        const interval = await suiUtils.getCurrentInterval();
-        
-        // Calculate time since last update
-        const now = Date.now();
-        const lastUpdated = nft.lastUpdated;
-        const diffInMs = now - lastUpdated;
-        const intervalMs = interval * 1000;
-        
-        // If enough time has passed, allow update
-        if (diffInMs >= intervalMs) {
-          setCanUpdate(true);
-          setTimeRemaining(0);
-        } else {
-          // Otherwise, calculate and display remaining time
-          setCanUpdate(false);
-          setTimeRemaining(intervalMs - diffInMs);
-        }
-      } catch (error) {
-        console.error('Error checking update status:', error);
-      }
+    const calculateTimeRemaining = () => {
+      const currentTime = Date.now();
+      const nextUpdateTime = nft.lastUpdated + (nft.updateInterval * 1000);
+      const remaining = Math.max(0, nextUpdateTime - currentTime);
+      setTimeRemaining(remaining);
     };
     
-    checkUpdateStatus();
+    // Calculate immediately
+    calculateTimeRemaining();
     
-    // Set up a timer to update the remaining time every second
+    // Then update every second
     const timer = setInterval(() => {
-      setTimeRemaining(prev => {
-        if (prev <= 1000) {
-          setCanUpdate(true);
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1000;
-      });
+      calculateTimeRemaining();
     }, 1000);
     
     return () => clearInterval(timer);
-  }, [nft.lastUpdated]);
+  }, [nft.lastUpdated, nft.updateInterval]);
   
   // Calculate time since last update
   const getTimeSinceLastUpdate = () => {
@@ -83,9 +60,9 @@ const NFTCard = ({ nft, onUpdate }) => {
   };
   
   const handleUpdateNFT = async () => {
-    // Don't allow update if not enough time has passed
-    if (!canUpdate) {
-      setError(`Cannot update yet. Please wait ${formatRemainingTime(timeRemaining)}.`);
+    // Check if the NFT is ready for an update
+    if (!suiUtils.isUpdateDue(nft)) {
+      setError(`Cannot update yet. This NFT can be updated every ${nft.updateInterval} seconds.`);
       return;
     }
     
@@ -100,66 +77,46 @@ const NFTCard = ({ nft, onUpdate }) => {
       
       console.log('NFT updated successfully:', result);
       
-      // Call the parent component's onUpdate function
+      // Call the callback to update the UI
       if (onUpdate) {
-        await onUpdate(nft.id, result);
+        onUpdate(nft.id, result);
       }
-      
     } catch (error) {
       console.error('Error updating NFT:', error);
-      
-      // Extract the specific error message if it's a MoveAbort error
-      let errorMessage = 'Failed to update NFT. Please try again.';
-      
-      if (error.message && error.message.includes('MoveAbort')) {
-        if (error.message.includes('EInvalidColorChangeTime') || error.message.includes('1)')) {
-          errorMessage = 'Not enough time has passed since the last update. Please wait and try again.';
-        }
-      }
-      
-      setError(errorMessage);
+      setError(`Failed to update NFT: ${error.message || 'Unknown error'}`);
     } finally {
       setIsUpdating(false);
     }
   };
-  
-  // Determine which image to display based on current state
-  const currentImage = nft.currentState === 0 ? nft.imageOne : nft.imageTwo;
+
+  const toggleSettings = () => {
+    setShowSettings(!showSettings);
+  };
   
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow">
       <div className="relative">
-        {/* NFT Image */}
-        <div className="aspect-square bg-gray-200 flex items-center justify-center overflow-hidden">
-          {currentImage ? (
-            <img 
-              src={currentImage} 
-              alt={nft.name} 
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="text-gray-400 flex flex-col items-center justify-center h-full">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <p className="mt-2">Image not available</p>
-            </div>
-          )}
-        </div>
-        
-        {/* State Badge */}
-        <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${nft.currentState === 0 ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
-          State {nft.currentState === 0 ? 'A' : 'B'}
+        <img 
+          src={nft.currentImage} 
+          alt={nft.name} 
+          className="w-full h-48 object-cover"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = 'https://via.placeholder.com/400x300?text=Image+Not+Available';
+          }}
+        />
+        <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded-full">
+          State: {nft.currentState === 0 ? 'A' : 'B'}
         </div>
       </div>
       
       <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-800 mb-1">{nft.name}</h3>
-        <p className="text-sm text-gray-600 mb-3">{nft.description}</p>
+        <h3 className="text-lg font-semibold text-gray-800 mb-1">{nft.name || 'Unnamed NFT'}</h3>
+        <p className="text-sm text-gray-600 mb-3">{nft.description || 'No description'}</p>
         
         <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
           <div>
-            <span className="font-medium">Last Updated:</span> {getTimeSinceLastUpdate()}
+            <span className="font-medium">Last updated:</span> {getTimeSinceLastUpdate()}
           </div>
           <div>
             <a 
@@ -168,14 +125,14 @@ const NFTCard = ({ nft, onUpdate }) => {
               rel="noopener noreferrer"
               className="text-primary-600 hover:text-primary-700"
             >
-              View on Explorer
+              View in Explorer
             </a>
           </div>
         </div>
         
         {/* Time until next update */}
         <div className="mb-4 p-2 bg-gray-100 rounded-md text-sm text-center">
-          {canUpdate ? (
+          {suiUtils.isUpdateDue(nft) ? (
             <span className="text-green-600 font-medium">Ready to update!</span>
           ) : (
             <div>
@@ -185,32 +142,50 @@ const NFTCard = ({ nft, onUpdate }) => {
           )}
         </div>
         
+        <div className="mb-2 text-xs text-gray-500">
+          <span className="font-medium">Update interval:</span> {nft.updateInterval} seconds
+        </div>
+        
         {error && (
-          <div className="mb-4 p-2 bg-red-100 text-red-700 rounded-md text-sm">
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
             {error}
           </div>
         )}
         
-        <button
-          onClick={handleUpdateNFT}
-          disabled={isUpdating || !canUpdate}
-          className={`w-full py-2 px-4 rounded-md font-medium transition-colors ${
-            isUpdating || !canUpdate
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-              : 'bg-primary-600 hover:bg-primary-700 text-white'
-          }`}
-        >
-          {isUpdating ? (
-            <div className="flex items-center justify-center">
-              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-              Updating...
-            </div>
-          ) : !canUpdate ? (
-            'Waiting for Update Time'
-          ) : (
-            'Update NFT State'
-          )}
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={handleUpdateNFT}
+            disabled={isUpdating || !suiUtils.isUpdateDue(nft)}
+            className={`flex-1 py-2 px-4 rounded-md transition-colors text-sm font-medium ${
+              suiUtils.isUpdateDue(nft) 
+                ? 'bg-primary-600 hover:bg-primary-700 text-white' 
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            {isUpdating ? (
+              <div className="flex items-center justify-center">
+                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                Updating...
+              </div>
+            ) : suiUtils.isUpdateDue(nft) ? 'Update Now' : 'Not Ready'}
+          </button>
+          
+          <button
+            onClick={toggleSettings}
+            className="py-2 px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+        
+        {showSettings && (
+          <NFTIntervalSettings 
+            nft={nft} 
+            onIntervalUpdate={onIntervalUpdate} 
+          />
+        )}
       </div>
     </div>
   );

@@ -24,9 +24,8 @@ module color_changing_nft::dynamic_nft {
     // The oracle that will trigger color changes
     public struct TimeOracle has key {
         id: UID,
-        // Timestamp of the last update
-        last_update: u64,
         // How often to update in seconds (3600 = 1 hour)
+        // This is now just a default value for new NFTs
         update_interval: u64
     }
 
@@ -45,7 +44,11 @@ module color_changing_nft::dynamic_nft {
         // Last time the NFT was updated
         last_updated: u64,
         // Current image based on state
-        current_image: String
+        current_image: String,
+        // Individual update interval in seconds
+        // This allows each NFT to have its own schedule
+        update_interval: u64,
+        owner: address
     }
 
     // Event emitted when the NFT color changes
@@ -55,14 +58,20 @@ module color_changing_nft::dynamic_nft {
         timestamp: u64
     }
 
+    // Event emitted when an NFT's update interval changes
+    public struct UpdateIntervalEvent has copy, drop {
+        nft_id: address,
+        new_interval: u64,
+        timestamp: u64
+    }
+
     // ===== Module Initialization =====
     
     fun init(otw: DYNAMIC_NFT, ctx: &mut TxContext) {
         // Create and share the TimeOracle
         let oracle = TimeOracle {
             id: object::new(ctx),
-            last_update: 0,
-            update_interval: 300 // 5 minutes in seconds
+            update_interval: 300 // 5 minutes in seconds (default)
         };
         transfer::share_object(oracle);
         
@@ -81,6 +90,7 @@ module color_changing_nft::dynamic_nft {
             string::utf8(b"description"),
             string::utf8(b"image_url"),
             string::utf8(b"current_state"),
+            string::utf8(b"update_interval"),
         ];
         
         let values = vector[
@@ -88,6 +98,7 @@ module color_changing_nft::dynamic_nft {
             string::utf8(b"{description}"),
             string::utf8(b"{current_image}"),
             string::utf8(b"{current_state}"),
+            string::utf8(b"{update_interval}"),
         ];
         
         let mut display = display::new_with_fields<DynamicNFT>(
@@ -107,6 +118,7 @@ module color_changing_nft::dynamic_nft {
         image_two: vector<u8>,
         name: vector<u8>,
         description: vector<u8>,
+        oracle: &TimeOracle,  // Get default interval from oracle
         clock: &Clock,
         ctx: &mut TxContext
     ) {
@@ -121,26 +133,24 @@ module color_changing_nft::dynamic_nft {
             name: string::utf8(name),
             description: string::utf8(description),
             last_updated: clock::timestamp_ms(clock),
-            current_image: image_one_str
+            current_image: image_one_str,
+            update_interval: oracle.update_interval,  // Use default from oracle
+            owner: tx_context::sender(ctx)
         };
         
         transfer::transfer(nft, tx_context::sender(ctx));
     }
     
-    /// Oracle update function - can be called by anyone, but will only change state when an hour has passed
+    /// Update NFT state - can be called by anyone, but will only change state when enough time has passed for this specific NFT
     public entry fun update_nft_state(
-        oracle: &mut TimeOracle,
         nft: &mut DynamicNFT,
         clock: &Clock,
         _ctx: &mut TxContext
     ) {
         let current_time = clock::timestamp_ms(clock);
         
-        // Check if enough time has passed since the last oracle update
-        if (current_time >= oracle.last_update + (oracle.update_interval * 1000)) {
-            // Update the oracle's last update time
-            oracle.last_update = current_time;
-            
+        // Check if enough time has passed since this NFT's last update
+        if (current_time >= nft.last_updated + (nft.update_interval * 1000)) {
             // Toggle the NFT state
             nft.current_state = if (nft.current_state == 0) { 1 } else { 0 };
             nft.last_updated = current_time;
@@ -160,14 +170,35 @@ module color_changing_nft::dynamic_nft {
         }
     }
     
-    /// Admin can change the update interval
-    public entry fun change_update_interval(
+    /// Admin can change the default update interval for new NFTs
+    public entry fun change_default_interval(
         _: &AdminCap,
         oracle: &mut TimeOracle,
         new_interval: u64,
         _ctx: &mut TxContext
     ) {
         oracle.update_interval = new_interval;
+    }
+    
+    /// NFT owner can change their NFT's update interval
+    public entry fun change_nft_interval(
+        nft: &mut DynamicNFT,
+        new_interval: u64,
+        clock: &Clock,
+        ctx: &mut TxContext
+    ) {
+        // Only the owner can change the interval
+        assert!(tx_context::sender(ctx) == nft.owner, ENotAuthorized);
+        
+        // Update the interval
+        nft.update_interval = new_interval;
+        
+        // Emit event for the interval change
+        event::emit(UpdateIntervalEvent {
+            nft_id: object::id_address(nft),
+            new_interval: new_interval,
+            timestamp: clock::timestamp_ms(clock)
+        });
     }
     
     // ===== View Functions =====
@@ -182,8 +213,18 @@ module color_changing_nft::dynamic_nft {
     }
     
     /// Check if the NFT is due for an update
-    public fun is_update_due(nft: &DynamicNFT, oracle: &TimeOracle, clock: &Clock): bool {
+    public fun is_update_due(nft: &DynamicNFT, clock: &Clock): bool {
         let current_time = clock::timestamp_ms(clock);
-        current_time >= nft.last_updated + (oracle.update_interval * 1000)
+        current_time >= nft.last_updated + (nft.update_interval * 1000)
+    }
+    
+    /// Get the update interval for an NFT
+    public fun get_update_interval(nft: &DynamicNFT): u64 {
+        nft.update_interval
+    }
+    
+    /// Get the default update interval from the oracle
+    public fun get_default_interval(oracle: &TimeOracle): u64 {
+        oracle.update_interval
     }
 }

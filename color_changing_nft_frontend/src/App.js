@@ -15,7 +15,8 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [currentInterval, setCurrentInterval] = useState(3600);
+  const [defaultInterval, setDefaultInterval] = useState(300);
+  const [adminCapId, setAdminCapId] = useState(null);
 
   const fetchUserNFTs = useCallback(async () => {
     if (!currentAccount?.address) return;
@@ -40,17 +41,25 @@ function App() {
     try {
       const isAdmin = await suiUtils.checkAdminStatus(currentAccount.address);
       setIsAdmin(isAdmin);
+      
+      if (isAdmin) {
+        // Get the admin cap ID for later use
+        const adminCaps = await suiUtils.getAdminCap(currentAccount.address);
+        if (adminCaps && adminCaps.length > 0) {
+          setAdminCapId(adminCaps[0].data.objectId);
+        }
+      }
     } catch (error) {
       console.error('Error checking admin status:', error);
     }
   }, [currentAccount]);
 
-  const fetchCurrentInterval = useCallback(async () => {
+  const fetchDefaultInterval = useCallback(async () => {
     try {
-      const interval = await suiUtils.getCurrentInterval();
-      setCurrentInterval(interval);
+      const interval = await suiUtils.getDefaultInterval();
+      setDefaultInterval(interval);
     } catch (error) {
-      console.error('Error fetching current interval:', error);
+      console.error('Error fetching default interval:', error);
     }
   }, []);
 
@@ -68,42 +77,25 @@ function App() {
     await fetchUserNFTs();
   }, [fetchUserNFTs]);
 
-  const handleUpdateInterval = useCallback(async (newInterval) => {
-    if (!isAdmin || !currentAccount) return;
-    
-    try {
-      // Find the admin cap object ID
-      const objects = await suiUtils.getAdminCap(currentAccount.address);
-      if (!objects || objects.length === 0) {
-        throw new Error('Admin capability not found');
-      }
-      
-      const adminCapId = objects[0].data.objectId;
-      
-      // Call the smart contract to update the interval
-      await suiUtils.updateTimeInterval(
-        { signAndExecuteTransactionBlock },
-        adminCapId,
-        parseInt(newInterval)
-      );
-      
-      // Update the local state
-      setCurrentInterval(parseInt(newInterval));
-      
-    } catch (error) {
-      console.error('Error updating interval:', error);
-      throw error;
-    }
-  }, [isAdmin, currentAccount, signAndExecuteTransactionBlock]);
+  const handleUpdateNFTInterval = useCallback(async (nftId, newInterval) => {
+    // This function is called from NFTIntervalSettings component
+    // After updating an NFT's interval, refresh the NFT list
+    await fetchUserNFTs();
+  }, [fetchUserNFTs]);
+
+  const handleUpdateDefaultInterval = useCallback(async (newInterval) => {
+    // Update the local state after the default interval is changed
+    setDefaultInterval(newInterval);
+  }, []);
 
   // Fetch user's NFTs when wallet is connected
   useEffect(() => {
     if (isConnected && currentAccount) {
       fetchUserNFTs();
       checkAdminStatus();
-      fetchCurrentInterval();
+      fetchDefaultInterval();
     }
-  }, [isConnected, currentAccount, fetchUserNFTs, checkAdminStatus, fetchCurrentInterval]);
+  }, [isConnected, currentAccount, fetchUserNFTs, checkAdminStatus, fetchDefaultInterval]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -138,7 +130,7 @@ function App() {
                   className={`py-2 px-4 ${activeTab === 'oracle' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'}`}
                   onClick={() => {
                     setActiveTab('oracle');
-                    fetchCurrentInterval(); // Refresh interval when switching to oracle tab
+                    fetchDefaultInterval(); // Refresh interval when switching to oracle tab
                   }}
                 >
                   Time Oracle
@@ -173,6 +165,7 @@ function App() {
                           key={nft.id}
                           nft={nft}
                           onUpdate={handleUpdateNFT}
+                          onIntervalUpdate={handleUpdateNFTInterval}
                         />
                       ))}
                     </div>
@@ -194,7 +187,10 @@ function App() {
               
               {activeTab === 'oracle' && (
                 <TimeOraclePanel 
-                  currentInterval={currentInterval}
+                  defaultInterval={defaultInterval}
+                  isAdmin={isAdmin}
+                  adminCapId={adminCapId}
+                  onIntervalUpdate={handleUpdateDefaultInterval}
                 />
               )}
             </div>

@@ -8,8 +8,8 @@ const client = new SuiClient({
 });
 
 // Contract address - replace with your deployed contract address
-const CONTRACT_ADDRESS = '0x858b87cea4a8af5dcf0f9ffe13b06a37e120ed4041e43d490f831abf37b4ce4b'; // Package ID for the dynamic NFT contract
-const TIME_ORACLE_ID = '0x784613592ff44a7424af93ddd3af33c5268dc6bedf04b5eace9811d6b10c6a78'; // Time Oracle object ID
+const CONTRACT_ADDRESS = '0x0e92dd08f4f41c971626e4e0e50247bec51c147d66825ae0a2d81688de857119'; // Package ID for the dynamic NFT contract
+const TIME_ORACLE_ID = '0x241a5481ba6a9d433d7793c4c8bde354cad998e8ec8d0c21c75e48746b5b823c'; // Time Oracle object ID
 
 // Utility functions for interacting with the smart contract
 export const suiUtils = {
@@ -46,13 +46,14 @@ export const suiUtils = {
           
           return {
             id: obj.data.objectId,
-            name: display?.name || 'Unnamed NFT',
-            description: display?.description || '',
-            currentState: content?.fields?.current_state || 0,
+            name: display?.name || content?.fields?.name || 'Unnamed NFT',
+            description: display?.description || content?.fields?.description || '',
+            currentState: parseInt(content?.fields?.current_state) || 0,
             imageOne,
             imageTwo,
             currentImage,
             lastUpdated: parseInt(content?.fields?.last_updated) || Date.now(),
+            updateInterval: parseInt(content?.fields?.update_interval) || 300, // Get individual update interval
           };
         });
     } catch (error) {
@@ -99,7 +100,6 @@ export const suiUtils = {
             uploadImageToImgBB(imageOne, `${name}_state0`)
               .then(url => { processedImageOne = url; })
               .catch(error => {
-                console.warn('Failed to upload image one to ImgBB:', error);
                 processedImageOne = storeImageLocally(imageOne, `${name}_state0`);
               })
           );
@@ -112,7 +112,6 @@ export const suiUtils = {
             uploadImageToImgBB(imageTwo, `${name}_state1`)
               .then(url => { processedImageTwo = url; })
               .catch(error => {
-                console.warn('Failed to upload image two to ImgBB:', error);
                 processedImageTwo = storeImageLocally(imageTwo, `${name}_state1`);
               })
           );
@@ -123,24 +122,16 @@ export const suiUtils = {
         // Wait for all uploads to complete
         await Promise.all(uploadPromises);
         
-        // Set default values if uploads didn't succeed
-        if (!processedImageOne && imageOne.startsWith('data:')) {
-          processedImageOne = storeImageLocally(imageOne, `${name}_state0`);
-        }
-        
-        if (!processedImageTwo && imageTwo.startsWith('data:')) {
-          processedImageTwo = storeImageLocally(imageTwo, `${name}_state1`);
-        }
       } catch (error) {
-        console.warn('Error in image upload process, falling back to local storage:', error);
+        console.error('Error uploading images:', error);
         // Fall back to local storage if ImgBB upload fails
         processedImageOne = imageOne.startsWith('data:') ? 
           storeImageLocally(imageOne, `${name}_state0`) : imageOne;
-        
         processedImageTwo = imageTwo.startsWith('data:') ? 
           storeImageLocally(imageTwo, `${name}_state1`) : imageTwo;
       }
       
+      // Create a new transaction block
       const tx = new TransactionBlock();
       
       // Set gas budget explicitly to avoid dry run failures
@@ -154,6 +145,7 @@ export const suiUtils = {
           tx.pure(processedImageTwo),
           tx.pure(name),
           tx.pure(description),
+          tx.object(TIME_ORACLE_ID), // Time Oracle object ID to get default interval
           tx.object('0x6'), // Clock object ID
           // Context is automatically provided by the transaction
         ],
@@ -187,7 +179,6 @@ export const suiUtils = {
       tx.moveCall({
         target: `${CONTRACT_ADDRESS}::dynamic_nft::update_nft_state`,
         arguments: [
-          tx.object(TIME_ORACLE_ID), // Time Oracle object ID
           tx.object(nftId), // NFT object ID
           tx.object('0x6'), // Clock object ID
           // Context is automatically provided by the transaction
@@ -210,17 +201,17 @@ export const suiUtils = {
     }
   },
   
-  // Update the interval for the time oracle (admin only)
-  async updateTimeInterval(signer, adminCapId, newIntervalSeconds) {
+  // Update the default interval for the time oracle (admin only)
+  async updateDefaultInterval(signer, adminCapId, newIntervalSeconds) {
     try {
       const tx = new TransactionBlock();
       
       // Set gas budget explicitly to avoid dry run failures
       tx.setGasBudget(10000000);
       
-      // Call the update_interval function from our smart contract
+      // Call the change_default_interval function from our smart contract
       tx.moveCall({
-        target: `${CONTRACT_ADDRESS}::dynamic_nft::update_interval`,
+        target: `${CONTRACT_ADDRESS}::dynamic_nft::change_default_interval`,
         arguments: [
           tx.object(adminCapId), // Admin capability object ID
           tx.object(TIME_ORACLE_ID), // Time Oracle object ID
@@ -240,7 +231,42 @@ export const suiUtils = {
       
       return result;
     } catch (error) {
-      console.error('Error updating time interval:', error);
+      console.error('Error updating default interval:', error);
+      throw error;
+    }
+  },
+  
+  // Update the interval for a specific NFT (owner only)
+  async updateNFTInterval(signer, nftId, newIntervalSeconds) {
+    try {
+      const tx = new TransactionBlock();
+      
+      // Set gas budget explicitly to avoid dry run failures
+      tx.setGasBudget(10000000);
+      
+      // Call the change_nft_interval function from our smart contract
+      tx.moveCall({
+        target: `${CONTRACT_ADDRESS}::dynamic_nft::change_nft_interval`,
+        arguments: [
+          tx.object(nftId), // NFT object ID
+          tx.pure(newIntervalSeconds.toString()), // New interval in seconds
+          tx.object('0x6'), // Clock object ID
+          // Context is automatically provided by the transaction
+        ],
+      });
+      
+      // Execute the transaction
+      const result = await signer.signAndExecuteTransactionBlock({
+        transactionBlock: tx,
+        options: {
+          showEffects: true,
+          showEvents: true,
+        },
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('Error updating NFT interval:', error);
       throw error;
     }
   },
@@ -256,33 +282,41 @@ export const suiUtils = {
       });
       
       // Check if any of the objects is an AdminCap
-      return objects.data.some(obj => {
+      const isAdmin = objects.data.some(obj => {
         const type = obj.data?.type;
         return type && type.includes(`${CONTRACT_ADDRESS}::dynamic_nft::AdminCap`);
       });
+      
+      return isAdmin;
     } catch (error) {
       console.error('Error checking admin status:', error);
       return false;
     }
   },
   
-  // Get the current interval from the time oracle
-  async getCurrentInterval() {
+  // Get the current default interval from the time oracle
+  async getDefaultInterval() {
     try {
-      const object = await client.getObject({
+      const oracle = await client.getObject({
         id: TIME_ORACLE_ID,
         options: {
           showContent: true,
         },
       });
       
-      const interval = object.data?.content?.fields?.interval;
+      const interval = oracle.data?.content?.fields?.update_interval;
       return interval ? parseInt(interval) : 300; // Default to 5 minutes if not found
     } catch (error) {
-      console.error('Error getting current interval:', error);
+      console.error('Error getting default interval:', error);
       return 300; // Default to 5 minutes
     }
   },
+  
+  // Check if an NFT is due for an update
+  isUpdateDue(nft) {
+    const currentTime = Date.now();
+    return currentTime >= nft.lastUpdated + (nft.updateInterval * 1000);
+  }
 };
 
 export default suiUtils;
