@@ -107,8 +107,8 @@ function App() {
       <Header />
       
       <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Dynamic NFT Dashboard</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">4dummies_dnft Dashboard</h1>
           <ConnectButton />
         </div>
         
@@ -204,7 +204,7 @@ function App() {
           <div className="bg-white rounded-lg shadow-md p-8 text-center">
             <h2 className="text-2xl font-bold mb-4">Connect Your Wallet</h2>
             <p className="text-gray-600 mb-6">
-              Connect your Sui wallet to mint and manage your dynamic NFTs.
+              Connect your Sui wallet to mint and manage your 4dummies_dnft.
             </p>
             <div className="flex justify-center">
               <ConnectButton />

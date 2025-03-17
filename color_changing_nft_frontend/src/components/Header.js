@@ -8,7 +8,7 @@ const Header = () => {
           <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
             <div className="w-8 h-8 rounded-full animate-color-shift"></div>
           </div>
-          <span className="text-xl font-bold">Dynamic NFT App</span>
+          <span className="text-xl font-bold">4dummies_dnft</span>
         </div>
         <nav>
           <ul className="flex space-x-6">

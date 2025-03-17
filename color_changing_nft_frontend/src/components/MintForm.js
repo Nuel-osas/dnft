@@ -194,7 +194,7 @@ const MintForm = ({ onMint }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div>
-        <h2 className="text-xl font-semibold mb-4">Mint a New Dynamic NFT</h2>
+        <h2 className="text-xl font-semibold mb-4">Mint a New 4dummies_dnft</h2>
         <form onSubmit={handleSubmit}>
           {error && (
             <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
@@ -212,8 +212,8 @@ const MintForm = ({ onMint }) => {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="My Dynamic NFT"
+              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+              placeholder="My 4dummies_dnft"
               required
             />
           </div>
@@ -227,7 +227,7 @@ const MintForm = ({ onMint }) => {
               name="description"
               value={formData.description}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
               placeholder="Describe your NFT..."
               rows="3"
             />
