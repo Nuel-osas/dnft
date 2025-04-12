@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4dummies_dnft Documentation</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #374151;
+            background-color: #f9fafb;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #374151;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #4b5563;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        p {
+            margin-bottom: 1rem;
+        }
+        ul, ol {
+            margin-bottom: 1.5rem;
+            padding-left: 1.5rem;
+        }
+        li {
+            margin-bottom: 0.5rem;
+        }
+        code {
+            font-family: 'Fira Code', 'Courier New', Courier, monospace;
+            background-color: #f3f4f6;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        pre {
+            background-color: #f3f4f6;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .header-anchor {
+            color: #d1d5db;
+            font-size: 0.8em;
+            margin-left: 0.5rem;
+            visibility: hidden;
+        }
+        h2:hover .header-anchor, 
+        h3:hover .header-anchor {
+            visibility: visible;
+        }
+        .toc {
+            background-color: #f3f4f6;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin-bottom: 2rem;
+        }
+        .toc-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+        .toc-h2 {
+            font-weight: 500;
+        }
+        .toc-h3 {
+            padding-left: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .back-to-app {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 0.75rem 1.5rem;
+            background-color: #3b82f6;
+            color: white;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .back-to-app:hover {
+            background-color: #2563eb;
+            text-decoration: none;
+        }
+        .gradient-header {
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+            padding: 2rem 0;
+            color: white;
+            margin-bottom: 2rem;
+            border-radius: 8px 8px 0 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="gradient-header">
+        <div class="container mx-auto px-4 py-4">
+            <h1 class="text-white border-none mb-0">4dummies_dnft Application</h1>
+            <p class="text-white opacity-80 text-xl">A full-stack decentralized application for minting and managing 4dummies_dnft on the Sui blockchain</p>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="toc">
+            <div class="toc-title">Table of Contents</div>
+            <ul>
+                <li><a href="#features" class="toc-h2">Features</a></li>
+                <li><a href="#project-structure" class="toc-h2">Project Structure</a></li>
+                <li><a href="#getting-started" class="toc-h2">Getting Started</a></li>
+                <li><a href="#usage-guide" class="toc-h2">Usage Guide</a></li>
+                <li><a href="#technical-details" class="toc-h2">Technical Details</a></li>
+                <li><a href="#how-it-works" class="toc-h2">How It Works</a></li>
+                <li><a href="#security-considerations" class="toc-h2">Security Considerations</a></li>
+                <li><a href="#troubleshooting" class="toc-h2">Troubleshooting</a></li>
+                <li><a href="#license" class="toc-h2">License</a></li>
+                <li><a href="#acknowledgments" class="toc-h2">Acknowledgments</a></li>
+            </ul>
+        </div>
+
+        <p>A full-stack decentralized application for minting and managing 4dummies_dnft on the Sui blockchain. This application demonstrates how 4dummies_dnft can change their appearance based on time intervals, creating an interactive and evolving digital asset experience.</p>
+
+        <h2 id="features">Features <a href="#features" class="header-anchor">#</a></h2>
+
+        <h3>Smart Contract Capabilities</h3>
+        <ul>
+            <li><strong>Dynamic State Changes</strong>: 4dummies_dnft automatically change their visual state based on configurable time intervals</li>
+            <li><strong>Admin Controls</strong>: Authorized users can modify the time oracle settings</li>
+            <li><strong>On-chain Verification</strong>: All state changes are verified and recorded on the Sui blockchain</li>
+        </ul>
+
+        <h3>Frontend Application</h3>
+        <ul>
+            <li><strong>Wallet Integration</strong>: Seamless connection with Sui wallets using Mysten Wallet Kit</li>
+            <li><strong>4dummies_dnft Minting</strong>: User-friendly interface for creating new 4dummies_dnft</li>
+            <li><strong>4dummies_dnft Management</strong>: View and update your 4dummies_dnft collection</li>
+            <li><strong>Time-based Updates</strong>: Visual countdown timer showing when 4dummies_dnft can be updated</li>
+            <li><strong>Admin Panel</strong>: Special controls for admin users to manage the time oracle</li>
+        </ul>
+
+        <h2 id="project-structure">Project Structure <a href="#project-structure" class="header-anchor">#</a></h2>
+
+        <p>The project consists of two main components:</p>
+
+        <h3>1. Smart Contract (<code>color_changing_nft</code>)</h3>
+        <ul>
+            <li>Written in Move language for the Sui blockchain</li>
+            <li>Implements the 4dummies_dnft logic and time oracle</li>
+            <li>Manages state changes and access control</li>
+        </ul>
+
+        <h3>2. Frontend Application (<code>color_changing_nft_frontend</code>)</h3>
+        <ul>
+            <li>React-based web application</li>
+            <li>Integrates with the Sui blockchain using Mysten Wallet Kit</li>
+            <li>Provides a user interface for all 4dummies_dnft operations</li>
+        </ul>
+
+        <h2 id="getting-started">Getting Started <a href="#getting-started" class="header-anchor">#</a></h2>
+
+        <h3>Prerequisites</h3>
+        <ul>
+            <li>Node.js (v14 or higher)</li>
+            <li>npm or yarn</li>
+            <li>Sui wallet (such as Sui Wallet browser extension)</li>
+            <li>Access to Sui testnet</li>
+        </ul>
+
+        <h3>Installation</h3>
+
+        <p>1. Clone the repository:</p>
+        <pre><code class="language-bash">git clone https://github.com/yourusername/dynamic-nft-app.git
+cd dynamic-nft-app</code></pre>
+
+        <p>2. Install frontend dependencies:</p>
+        <pre><code class="language-bash">cd color_changing_nft_frontend
+npm install</code></pre>
+
+        <p>3. Start the development server:</p>
+        <pre><code class="language-bash">npm start</code></pre>
+
+        <p>4. Open your browser and navigate to <code>http://localhost:3000</code></p>
+
+        <h2 id="usage-guide">Usage Guide <a href="#usage-guide" class="header-anchor">#</a></h2>
+
+        <h3>Connecting Your Wallet</h3>
+        <ol>
+            <li>Click the "Connect Wallet" button in the top-right corner</li>
+            <li>Select your preferred Sui wallet</li>
+            <li>Approve the connection request</li>
+        </ol>
+
+        <h3>Minting a New 4dummies_dnft</h3>
+        <ol>
+            <li>Navigate to the "Mint New 4dummies_dnft" tab</li>
+            <li>Fill in the 4dummies_dnft details:
+                <ul>
+                    <li>Name: Give your 4dummies_dnft a unique name</li>
+                    <li>Description: Describe what makes your 4dummies_dnft special</li>
+                    <li>Image One URL: Provide a URL for the first state image</li>
+                    <li>Image Two URL: Provide a URL for the second state image</li>
+                </ul>
+            </li>
+            <li>Click "Mint 4dummies_dnft" and approve the transaction in your wallet</li>
+            <li>Wait for the transaction to be confirmed on the blockchain</li>
+        </ol>
+
+        <h3>Viewing Your 4dummies_dnft Collection</h3>
+        <ol>
+            <li>Navigate to the "My Collection" tab</li>
+            <li>View all your 4dummies_dnft with their current state</li>
+            <li>See when each 4dummies_dnft was last updated and when it can be updated next</li>
+        </ol>
+
+        <h3>Updating 4dummies_dnft State</h3>
+        <ol>
+            <li>In the "My Collection" tab, find the 4dummies_dnft you want to update</li>
+            <li>Check the countdown timer to see if an update is possible</li>
+            <li>When ready, click the "Update 4dummies_dnft State" button</li>
+            <li>Approve the transaction in your wallet</li>
+            <li>The 4dummies_dnft will switch to its alternate state</li>
+        </ol>
+
+        <h3>Managing Time Oracle (Admin Only)</h3>
+        <ol>
+            <li>If you have admin privileges, navigate to the "Time Oracle" tab</li>
+            <li>View the current update interval</li>
+            <li>Set a new interval by entering the time in seconds</li>
+            <li>Click "Update Interval" and approve the transaction</li>
+        </ol>
+
+        <h2 id="technical-details">Technical Details <a href="#technical-details" class="header-anchor">#</a></h2>
+
+        <h3>Smart Contract</h3>
+        <ul>
+            <li><strong>Package ID</strong>: <code>0x0bf972bf36777877adcb2220e5ae599435a0e94fa02310102e0e9a9c510e6b44</code></li>
+            <li><strong>Time Oracle ID</strong>: <code>0x864e17134e1ab0b5657558547d47419d8e517d4c6eacdce97eda95e56d7b5a1b</code></li>
+            <li><strong>Network</strong>: Sui Testnet</li>
+        </ul>
+
+        <h3>Frontend Technologies</h3>
+        <ul>
+            <li>React.js</li>
+            <li>Tailwind CSS for styling</li>
+            <li>@mysten/wallet-kit for wallet integration</li>
+            <li>@mysten/sui.js for blockchain interactions</li>
+        </ul>
+
+        <h2 id="how-it-works">How It Works <a href="#how-it-works" class="header-anchor">#</a></h2>
+
+        <ol>
+            <li><strong>4dummies_dnft Creation</strong>: When you mint a 4dummies_dnft, it stores two images and starts in state 0 (first image)</li>
+            <li><strong>Time Oracle</strong>: A shared object on the blockchain tracks the time interval between allowed updates</li>
+            <li><strong>State Updates</strong>: After the specified time interval has passed, you can update your 4dummies_dnft to toggle between states</li>
+            <li><strong>Admin Control</strong>: Administrators can adjust the time interval, affecting all 4dummies_dnft in the system</li>
+        </ol>
+
+        <h2 id="security-considerations">Security Considerations <a href="#security-considerations" class="header-anchor">#</a></h2>
+
+        <ul>
+            <li>All transactions require wallet signatures for verification</li>
+            <li>Admin functions are protected by capability-based access control</li>
+            <li>Time-based restrictions prevent excessive state changes</li>
+        </ul>
+
+        <h2 id="troubleshooting">Troubleshooting <a href="#troubleshooting" class="header-anchor">#</a></h2>
+
+        <h3>Common Issues</h3>
+
+        <p><strong>Transaction Failed - Dry Run Error</strong></p>
+        <ul>
+            <li>This usually indicates a gas budget issue</li>
+            <li>The application now sets explicit gas budgets to avoid this</li>
+        </ul>
+
+        <p><strong>Cannot Update 4dummies_dnft - Time Restriction</strong></p>
+        <ul>
+            <li>4dummies_dnft can only be updated after the specified time interval has passed</li>
+            <li>Check the countdown timer to see when an update will be possible</li>
+        </ul>
+
+        <p><strong>Wallet Connection Issues</strong></p>
+        <ul>
+            <li>Make sure your wallet is on the Sui testnet network</li>
+            <li>Try disconnecting and reconnecting your wallet</li>
+        </ul>
+
+        <h2 id="license">License <a href="#license" class="header-anchor">#</a></h2>
+
+        <p>This project is licensed under the MIT License - see the LICENSE file for details.</p>
+
+        <h2 id="acknowledgments">Acknowledgments <a href="#acknowledgments" class="header-anchor">#</a></h2>
+
+        <ul>
+            <li>Sui Foundation for the blockchain infrastructure</li>
+            <li>Mysten Labs for the wallet integration tools</li>
+            <li>The Move language community for smart contract development resources</li>
+        </ul>
+
+        <a href="/" class="back-to-app">Back to Application</a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
