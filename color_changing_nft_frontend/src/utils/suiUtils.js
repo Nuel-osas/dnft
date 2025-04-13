@@ -2,14 +2,15 @@ import { SuiClient } from '@mysten/sui.js/client';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { uploadImageToImgBB, storeImageLocally, getStoredImage } from './imageUtils';
 
-// Initialize the SuiClient for testnet
+// Initialize the SuiClient for mainnet
 const client = new SuiClient({
-  url: 'https://fullnode.testnet.sui.io',
+  url: 'https://fullnode.mainnet.sui.io',
 });
 
-// Contract address - replace with your deployed contract address
-const CONTRACT_ADDRESS = '0x0e92dd08f4f41c971626e4e0e50247bec51c147d66825ae0a2d81688de857119'; // Package ID for the dynamic NFT contract
-const TIME_ORACLE_ID = '0x241a5481ba6a9d433d7793c4c8bde354cad998e8ec8d0c21c75e48746b5b823c'; // Time Oracle object ID
+// Contract address - mainnet deployment
+const CONTRACT_ADDRESS = '0xb8b16acf7c5edbbd659ad42e280d4e658f006408a5d594a3141f0a6ee76cdfd9'; // Package ID for the dynamic NFT contract on mainnet
+// Time Oracle object ID for mainnet
+const TIME_ORACLE_ID = '0xc17e84a75a3281500797a7225fc013a61740a48d71c812a05651831fd7afd6c5';
 
 // Utility functions for interacting with the smart contract
 export const suiUtils = {
